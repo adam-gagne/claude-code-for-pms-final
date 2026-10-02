@@ -1,6 +1,6 @@
 {
   "enabledMcpjsonServers": ["rook-wiki", "rook-database"],
   "permissions": {
-    "allow": ["mcp__rook-wiki", "mcp__rook-database"]
+    "allow": ["mcp__rook-wiki", "mcp__rook-database", "Bash(git remote set-url origin https://github.com/adam-gagne/claude-code-for-pms-final.git)"]
   }
 }
