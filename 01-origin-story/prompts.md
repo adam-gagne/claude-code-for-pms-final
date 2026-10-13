@@ -24,6 +24,20 @@ prompt library built from your own questions.
 
 ### 1.
 
+What can you tell me about the 4.2 release?
+
 ### 2.
 
+What is causing issues with the latest release?
+
 ### 3.
+
+I want to better understand the silent phone issue. Review logs for the push delivery and let me know if the messages are reaching the phones or if they are getting stopped somewhere in the dispatch sequence
+
+### 4.
+
+Review the customer feedback - tell me what the biggest issue for the customers
+
+### 5.
+
+Before we wrap up, two things. First: look back through this session and find the prompts I wrote myself, not the starter I pasted. Save them into 01-origin-story/prompts.md, one per numbered slot, exactly as I typed them. Don't tidy them up. Second: add a few lines to the Working context in CLAUDE.md, anything we figured out today that isn't in there yet and that I'd want you to already know next session.

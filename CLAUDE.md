@@ -24,4 +24,111 @@ teaching scenario.
 
 ## Working context
 
-_You'll fill this in during Module 1._
+Sources: rook-wiki (About Rook, Glossary, Team directory, Releases, Q3 roadmap,
+Product briefs, 4.2 comments) and `00-rook/company/notes/handoff-from-priya.docx`.
+I'm the new PM for **Rook Dispatch**, replacing Priya Raghunathan (left 21 Aug 2026).
+Wiki data is as of the dates shown; re-check before relying on it.
+
+### Company and products
+- Rook Industries: coordination and provisioning software for the protective-response
+  sector. Customers are masked responders (independent, not employees) and the
+  handlers and quartermasters who support them. Subscription, priced per active responder.
+- **Rook Dispatch** (mine): responder coordination. Incident comes in, Dispatch ranks
+  available responders, pings the top one's phone, and they take it or turn it down.
+  Handlers use the web console; responders use a native phone app. Monthly releases,
+  4.x numbering. Routing config ships in the release; it is not a runtime setting.
+- **Rook Supply**: gear provisioning (requisitions, maintenance, field failure reports).
+  Handlers and quartermasters. Dispatch writes the Responder Availability Record; Supply reads it.
+- **Confidentiality is contractual**: cover identities are never mapped to legal identities
+  in production. Never design anything that assumes that mapping or tries to infer
+  identity. Read Security Policy 4.1 before touching responder records.
+
+### People (Dispatch team)
+Wiki comments use roles, not names. Mapping:
+| Role in comments | Person | Notes |
+| --- | --- | --- |
+| Engineering manager | Marcus Oyelaran | Eng manager, Dispatch (Site Aleph). Priya's "start here" contact. |
+| Staff engineer | Wen Li | Built the ping-ranking logic (Berlin). No written doc; talk to Wen. |
+| Support lead | Nadia Hoffmann | Owns tickets (Berlin). Suggested standing 15 min. |
+| Product designer | Sofia Marino | Console and phone app; ran the September interviews. |
+| Director of Product | Helen Achebe | My manager. Owns roadmap and commitments. |
+| Data analyst | Ravi Menon | Singapore. Reports weekly on ping acceptance. |
+| Priya | Priya Raghunathan | Previous PM, gone. Only reachable via Marcus. |
+Supply names that appear in briefs: Halloran (quartermaster). Interview handlers include
+Aunt Dot, Mr. Ambrose, Kip (responder names are cover personas).
+HQ is Site Aleph (ice shelf); offices in Berlin, Singapore, Cornwall.
+
+### Vocabulary
+- **Callout**: request for a responder to attend an incident. **Ping**: one callout offered to one responder.
+- **Taken / Turned down / Missed**: yes / no / no answer in time. Turned down and
+  missed both move the ping on, but are recorded separately.
+- **Ping wait**: how long a ping sits before counting as missed (90s before 4.2, 60s now).
+- **Routing priority**: score ranking responders. Inputs: proximity (travel-time estimate),
+  availability, capability match, recent acceptance history. Declining or missing lowers
+  the recent-acceptance part, so a responder drops in later orders.
+- **Acceptance rate** (headline metric: taken / all pings), **time-to-accept** (median s
+  to taken), **coverage gap** (no available responder had the needed capability tags;
+  distinct from low acceptance).
+- **Capability tags**: flight, structural-entry, hazmat-tolerant, cold-weather, aquatic,
+  crowd-management, de-escalation. **Mutual aid**: cross-city cover, unsupported, Q4 exploration.
+- Supply: **requisition**, **field failure report**, **service interval**.
+
+### Where things stand (as of mid-Oct 2026)
+**Releases:** 4.0 (7 Apr): new nav, profile redesign, routing override audit log.
+4.1 (16 Jun): travel-time proximity, bulk callout, push reliability.
+4.2 (12 Aug): proximity weighted up vs recent acceptance, ping wait 90s to 60s,
+persistent console filters, three defect fixes.
+
+**The 4.2 problem (my first priority):**
+- Since 4.2, callout tickets ~3x normal; split ~2/3 "phone never goes off", ~1/3
+  "gone before I could answer". Volume flat as of 26 Aug. A handler emailed Nadia directly.
+- The 1/3 is explained by the 60s ping wait. The 2/3 is unexplained.
+- Priya's and Marcus's story is "seasonal August dip, will recover in September." **No
+  numbers have been shown to support it**, and it's now October. Treat as unverified.
+  Ask Ravi for weekly acceptance rate, split into taken / turned down / missed, before and after 12 Aug.
+- Open design question from Marcus (14 Aug, unanswered; Wen was away): the proximity change
+  doesn't distinguish responders who've been declining from everyone else. Was that a
+  decision or did it fall out? One hypothesis to test, not a conclusion: weighting
+  proximity over acceptance history reorders who gets pinged and may leave some responders
+  never offered pings. Wen is the person to ask.
+- Priya's guidance: don't make this a revert-4.2 debate (the change was long requested by
+  wide-area responders). Fair to weigh, but it shouldn't block looking at the data.
+- Marcus agreed (28 Aug) to regroup with me on the 4.2 picture and not hand me a conclusion.
+  Nadia has the ticket breakdown.
+
+**Roadmap (Q3, last reviewed 30 Jun by Priya; stale):**
+| Item | Target | Status | Note |
+| --- | --- | --- | --- |
+| Change to who gets pinged | 4.2 | Committed | Shipped |
+| Ping timeout tuning | 4.2 | Committed | Shipped (90s to 60s) |
+| Availability Confidence | 4.2 | Committed | Not in 4.2 notes; presumably deferred. Confirm with Helen |
+| Requisition approval chains | 4.3 | Committed | Supply |
+| Handler phone app | Q4 | Exploring | Sofia |
+| Shared cover between responders | Q4 | Exploring | |
+Priya said some items got squeezed from 4.2 and that the "which are still Q3 commitments"
+conversation with Helen never happened. It needs to.
+
+**Briefs (check currency before citing):**
+- Bulk Callout (Jan): shipped in 4.1 though brief still says unowned.
+- Routing Override Audit Log (Mar): shipped in 4.0.
+- Requisition Approval Chains (Jul, Supply): ask is a second approval over $2,000; the
+  brief has scope creep (48h bypass, cross-site dashboard, replace Halloran's spreadsheet). Phasing TBD.
+- Handler Phone App (8 Sep): notifications, status view, one-tap contact; Sofia exploring, unstaffed.
+  Prompted by handler Aunt Dot's request to be notified too.
+
+### Standing to-dos inherited from Priya
+1. Write the missing description of how routing priority decides who gets pinged (with Wen).
+2. Hold the commitments conversation with Helen.
+3. Ignore console filter-persistence tickets (cosmetic noise).
+4. Early on, question decisions in parts of the product nobody has examined closely.
+
+### How to work with me
+- Cite the source (wiki page, handoff, comment) and flag when something is inference.
+- Don't state a cause for the 4.2 drop until the numbers are in.
+
+### Found in the data (session of 13 Oct 2026; sources: rook-database `pings`, `support_tickets`; repo `00-rook/code/dispatch-routing`)
+- Ping acceptance was 75–78% every week before 12 Aug, with no August dip. It fell to 54% in the week of 10 Aug and was back to 73% by 31 Aug. Missed pings went from about 2% to 13–22% of pings. Declines barely moved.
+- Pings are concentrated since 4.2. Farlight, The Undertow, Meteor Mite and Vesper dropped from about 12 a week to 3–5 a week, while the busiest responders rose. My earlier "every responder still gets pinged" was true at weekly level and hid this, so don't rely on it.
+- Support tickets since 4.2: about 30 are "my phone hasn't gone off / nothing coming through" (none before 12 Aug), and about 15 are "moved on before I could answer." Inference: the first is ranking starvation, from top-down offers plus the decline penalty with no decay (`history.py` TODO). The second is the 60s wait. Neither is confirmed.
+- The push path is not in the repo: `push_to_device`, `poll_device` and `withdraw_from_device` are stubs in `offer.py`. A failed push is recorded as missed. No push delivery logs were found in the course folder or the database. To test whether phones receive offers, get push provider receipts (APNs/FCM) for 12 Aug to 6 Sep and ask Wen.
+- Still open: whether the ranking change was meant to affect responders who decline (Wen), and whether the 2/3 "phone never goes off" tickets are the same group as the starved responders.
