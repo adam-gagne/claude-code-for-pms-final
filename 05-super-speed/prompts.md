@@ -56,7 +56,12 @@ Give me a new color palette, lets keep a dark theme, but slightly lighter with a
 
 ### 11.
 
-I want to save a habit as something I can reuse. When I review a brief before it goes any further, here's what I actually check for: - It names who owns it - It says how we'll know it worked - The scope at the end matches the scope at the start - It explains the problem before it proposes a fix. Turn that into a skill called review-checklist, so I can point it at any brief and get the same check every time, without me explaining it again.
+I want to save a habit as something I can reuse. When I review a brief before it goes any further, here's what I actually check for:
+- It names who owns it
+- It says how we'll know it worked
+- The scope at the end matches the scope at the start
+- It explains the problem before it proposes a fix
+Turn that into a skill called review-checklist, so I can point it at any brief and get the same check every time, without me explaining it again.
 
 ### 12.
 
