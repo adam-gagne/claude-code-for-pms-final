@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rook Dispatch console — quiet responder prototype</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  /* Palette: "Harbour dusk"
+     Harbour      #17232b  page          Teal      #4fc3b0  primary / ok
+     Deep tide    #20303a  surfaces      Seafoam   #7ad9c9  primary hover, logo
+     Tide         #2a3c47  raised        Amber     #e6b45a  quiet / attention
+     Slate        #3a4f5c  lines         Blue      #6ba8e0  busy
+     Foam         #e9f0f2  text          Lilac     #b7a6e6  pinged
+     Sea mist     #9db3bd  muted text    Mist      #a9bcc4  waiting
+     Coral        #e08a78  declined/missed                          */
+  :root { --bg:#17232b; --card:#20303a; --raise:#2a3c47; --line:#3a4f5c;
+          --ink:#e9f0f2; --mute:#9db3bd; --teal:#4fc3b0; --seafoam:#7ad9c9;
+          --amber:#e6b45a; --blue:#6ba8e0; --lilac:#b7a6e6; --mist:#a9bcc4; --coral:#e08a78; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:15px/1.5 -apple-system,Segoe UI,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink); }
+  header { background:var(--card); border-bottom:1px solid var(--line); padding:12px 24px; display:flex; justify-content:space-between; align-items:center; }
+  .brand { display:flex; align-items:center; gap:12px; }
+  .brand svg { width:34px; height:34px; }
+  .brand .name { font:700 20px/1 Georgia,'Times New Roman',serif; letter-spacing:.14em; text-transform:uppercase; }
+  .brand .prod { color:var(--teal); font-size:12px; letter-spacing:.2em; text-transform:uppercase; margin-top:4px; }
+  header .who { color:var(--mute); font-size:13px; }
+  .banner { background:#2d2b1e; border-bottom:1px solid #54482a; color:#e8d29c; padding:8px 24px; font-size:13px; }
+  main { display:grid; grid-template-columns:minmax(0,1fr) 320px; gap:24px; padding:24px; max-width:1100px; margin:0 auto; }
+  h2 { margin:0 0 12px; font-size:12px; text-transform:uppercase; letter-spacing:.14em; color:var(--mute); font-weight:600; }
+  .cards { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px; }
+  .card h3 { margin:0; font:600 21px/1.2 Georgia,'Times New Roman',serif; }
+  .sub { color:var(--mute); font-size:13px; margin:2px 0 12px; }
+  .stat { display:flex; justify-content:space-between; padding:7px 0; border-top:1px solid var(--line); font-size:14px; }
+  .pill { display:inline-block; padding:2px 11px; border-radius:99px; font-size:12px; font-weight:600; background:rgba(169,188,196,.16); color:var(--mist); }
+  .pill.quiet  { background:rgba(230,180,90,.16);  color:var(--amber); }
+  .pill.ok     { background:rgba(79,195,176,.18); color:var(--teal); }
+  .pill.busy   { background:rgba(107,168,224,.18); color:var(--blue); }
+  .pill.pinged { background:rgba(183,166,230,.18); color:var(--lilac); }
+  .why { background:rgba(230,180,90,.12); border:1px solid rgba(230,180,90,.28); color:#f3e2b8; border-radius:9px; padding:10px 12px; margin:12px 0; font-size:14px; }
+  .why.good { background:rgba(79,195,176,.12); border-color:rgba(79,195,176,.3); color:#c6efe7; }
+  .why.info { background:rgba(107,168,224,.12); border-color:rgba(107,168,224,.28); color:#cfe4f7; }
+  button { font:inherit; cursor:pointer; border-radius:9px; border:1px solid var(--line); background:var(--raise); color:var(--ink); padding:9px 14px; }
+  button:hover { border-color:var(--teal); }
+  button.primary { background:var(--teal); border-color:var(--teal); color:#0d2a26; font-weight:700; width:100%; }
+  button.primary:hover { background:var(--seafoam); }
+  button:disabled { opacity:.45; cursor:default; }
+  button:disabled:hover { border-color:var(--line); }
+  button.primary:disabled:hover { background:var(--teal); }
+  .bar { height:8px; background:var(--raise); border-radius:99px; overflow:hidden; margin:4px 0 2px; }
+  .bar i { display:block; height:100%; background:var(--teal); transition:width .4s; }
+  .bar i.blue { background:var(--blue); }
+  .small { font-size:12px; color:var(--mute); }
+  .log { margin-top:24px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; }
+  .log ol { margin:0; padding-left:20px; } .log li { margin:4px 0; font-size:14px; }
+  .demo { margin-top:16px; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .demo .small { flex-basis:100%; }
+  .phone { width:300px; height:560px; background:#0f1a20; border:1px solid var(--line); border-radius:34px; padding:14px; margin:0 auto; }
+  .screen { background:var(--bg); border-radius:22px; height:100%; padding:20px 16px; display:flex; flex-direction:column; }
+  .screen h4 { margin:0 0 4px; font-size:12px; color:var(--mute); text-transform:uppercase; letter-spacing:.12em; }
+  .idle { margin:auto; text-align:center; color:var(--mute); }
+  .ping { margin-top:8px; }
+  .tag { display:inline-block; background:rgba(183,166,230,.18); color:var(--lilac); font-size:12px; font-weight:600; padding:2px 11px; border-radius:99px; }
+  .count { font:700 46px/1 Georgia,serif; text-align:center; margin:16px 0 4px; font-variant-numeric:tabular-nums; color:var(--seafoam); }
+  .phone button { width:100%; margin-top:8px; padding:14px; }
+  .phone .take { background:var(--teal); border-color:var(--teal); color:#0d2a26; font-weight:700; }
+  .phone .take:hover { background:var(--seafoam); }
+  .roster { width:300px; margin:16px auto 0; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 14px; }
+  .roster .row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-top:1px solid var(--line); font-size:14px; }
+  .roster .row:first-child { border-top:0; }
+  [hidden] { display:none !important; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <svg viewBox="0 0 32 32" aria-label="Rook logo" role="img">
+      <path fill="#7ad9c9" d="M7 3h4.5v4H14V3h4v4h2.5V3H25v9.5l-3.5 3v7.5l3.5 3.2V29H7v-2.8L10.5 23v-7.5L7 12.5z"/>
+      <path fill="#17232b" d="M14 20h4v4h-4z" opacity=".55"/>
+    </svg>
+    <div><div class="name">Rook</div><div class="prod">Dispatch</div></div>
+  </div>
+  <span class="who">Handler console · Kip · 2 responders</span>
+</header>
+<div class="banner">Prototype for discussion. Names are cover personas; every number below is illustrative, not live data. Standing is shown for the demo only. Proposed values: turn-down −0.10, miss −0.06, yes +0.08.</div>
+
+<main>
+  <section>
+    <h2>Your responders</h2>
+    <div class="cards">
+      <div class="card" id="mite">
+        <h3>Meteor Mite</h3>
+        <div class="sub">hazmat-tolerant · cold-weather</div>
+        <div><span class="pill quiet" id="mite-pill">Quiet</span></div>
+        <div class="why" id="mite-why"><b>No offers in 9 days.</b> Last 6 offers turned down or missed.</div>
+        <div class="stat"><span>Offers this week</span><b id="mite-week">0</b></div>
+        <div class="stat"><span>Standing</span><span class="small" id="mite-score-txt"></span></div>
+        <div class="bar"><i id="mite-bar"></i></div>
+        <div style="margin-top:12px">
+          <button class="primary" id="offer-btn">Offer them the next suitable callout</button>
+          <div class="small" id="offer-note" style="margin-top:6px">Only goes to Mite if they are qualified and close enough.</div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>The Gale</h3>
+        <div class="sub">flight · crowd-management</div>
+        <div><span class="pill busy">Busy</span></div>
+        <div class="why info"><b>14 offers this week.</b> Routing as normal.</div>
+        <div class="stat"><span>Offers this week</span><b>14</b></div>
+        <div class="stat"><span>Standing</span><span class="small">high</span></div>
+        <div class="bar"><i class="blue" style="width:88%"></i></div>
+        <div class="small" style="margin-top:12px">No change for The Gale.</div>
+      </div>
+    </div>
+
+    <div class="demo">
+      <div class="small"><b>Demo controls</b> (not part of the console)</div>
+      <button id="callout-btn" disabled>Send a callout Mite qualifies for</button>
+      <button id="reset-btn">Reset</button>
+    </div>
+
+    <div class="log"><h2>What happened</h2><ol id="log"><li>Mite has gone quiet. Kip can see why.</li></ol></div>
+  </section>
+
+  <aside>
+    <h2 style="text-align:center">Mite's phone</h2>
+    <div class="phone"><div class="screen">
+      <div class="idle" id="idle">Nothing offered.<br><span class="small">Mite's phone has been quiet.</span></div>
+      <div class="ping" id="ping" hidden>
+        <span class="tag">Welcome back</span>
+        <h4 style="margin-top:12px">Callout offered to you</h4>
+        <div style="font-size:18px;font-weight:600">Structural collapse, Uptown</div>
+        <div class="small">Hazmat-tolerant needed · est. 11 min travel</div>
+        <div class="count" id="count">90</div>
+        <div class="small" style="text-align:center">seconds to answer</div>
+        <button class="take" id="take">Take it</button>
+        <button id="turn">Turn down</button>
+        <button id="miss" class="small">(Demo) let it time out</button>
+      </div>
+      <div class="idle" id="result" hidden></div>
+    </div></div>
+    <h2 style="margin-top:16px;text-align:center">Other responders</h2>
+    <div class="roster" id="roster"></div>
+  </aside>
+</main>
+
+<script>
+const START = 0.20, YES = 0.08, DECLINE = 0.10, MISS = 0.06;
+let score, timer, left, queued;
+const $ = id => document.getElementById(id);
+const log = t => { const li = document.createElement('li'); li.textContent = t; $('log').appendChild(li); };
+
+const ROSTER = [['Cindermark','wait','Waiting'], ['Sgt. Falkirk','busy','Busy'], ['Farlight','quiet','Quiet'],
+                ['The Undertow','quiet','Quiet'], ['Vesper','wait','Waiting'], ['Ashgrove','busy','Busy'], ['Halfmoon','wait','Waiting']];
+function paintRoster(pinged) {
+  $('roster').innerHTML = ROSTER.map(([n,c,t]) => {
+    if (pinged && n === 'Cindermark') { c = 'pinged'; t = 'Pinged'; }
+    return '<div class="row"><span>'+n+'</span><span class="pill '+c+'">'+t+'</span></div>';
+  }).join('');
+}
+function paint() {
+  $('mite-bar').style.width = Math.round(score*100)+'%';
+  $('mite-score-txt').textContent = score < 0.35 ? 'low' : score < 0.6 ? 'recovering' : 'healthy';
+}
+function reset() {
+  clearInterval(timer); score = START; queued = false;
+  $('mite-pill').className = 'pill quiet'; $('mite-pill').textContent = 'Quiet';
+  $('mite-why').className = 'why';
+  $('mite-why').innerHTML = '<b>No offers in 9 days.</b> Last 6 offers turned down or missed.';
+  $('mite-week').textContent = '0';
+  $('offer-btn').disabled = false; $('offer-btn').textContent = 'Offer them the next suitable callout';
+  $('offer-note').textContent = 'Only goes to Mite if they are qualified and close enough.';
+  $('callout-btn').disabled = true;
+  $('idle').hidden = false; $('ping').hidden = true; $('result').hidden = true;
+  $('log').innerHTML = '<li>Mite has gone quiet. Kip can see why.</li>';
+  paintRoster(false);
+  paint();
+}
+function settle(kind) {
+  clearInterval(timer);
+  $('ping').hidden = true; $('result').hidden = false; $('idle').hidden = true;
+  $('mite-week').textContent = '1'; $('callout-btn').disabled = true;
+  if (kind === 'yes') {
+    score = Math.min(1, score + YES);
+    $('result').innerHTML = '<b>You took it.</b><br>You are back in the rotation.';
+    $('mite-pill').className = 'pill ok'; $('mite-pill').textContent = 'Back in rotation';
+    $('mite-why').className = 'why good';
+    $('mite-why').innerHTML = '<b>Took the welcome-back offer.</b> Standing restored (+0.08).';
+    log('Mite took it. Standing +0.08. The Quiet label is gone.');
+  } else {
+    paintRoster(true);
+    const cost = kind === 'no' ? DECLINE : MISS;
+    score = Math.max(0, score - cost);
+    $('result').innerHTML = kind === 'no' ? '<b>Turned down.</b><br>It has moved to the next responder.' : '<b>Timed out.</b><br>It has moved to the next responder.';
+    $('mite-why').innerHTML = '<b>Welcome-back offer ' + (kind === 'no' ? 'turned down' : 'missed') + '.</b> Went to the next responder.';
+    log('Mite ' + (kind === 'no' ? 'turned it down (−0.10)' : 'missed it (−0.06)') + '. It went to the next responder. Kip sees the offer was made.');
+  }
+  paint();
+}
+
+$('offer-btn').onclick = () => {
+  queued = true; $('offer-btn').disabled = true; $('offer-btn').textContent = 'Queued for Mite';
+  $('offer-note').textContent = 'The next suitable callout goes to Mite first, with a full 90s to answer.';
+  $('callout-btn').disabled = false;
+  log('Kip tapped "Offer them the next suitable callout".');
+};
+$('callout-btn').onclick = () => {
+  $('callout-btn').disabled = true; $('idle').hidden = true; $('ping').hidden = false;
+  log('A callout Mite qualifies for came in. Mite is pinged first as a welcome-back offer.');
+  left = 90; $('count').textContent = left;
+  timer = setInterval(() => { left--; $('count').textContent = left; if (left <= 0) settle('miss'); }, 1000);
+};
+$('take').onclick = () => settle('yes');
+$('turn').onclick = () => settle('no');
+$('miss').onclick = () => settle('miss');
+$('reset-btn').onclick = reset;
+reset();
+</script>
+</body>
+</html>
