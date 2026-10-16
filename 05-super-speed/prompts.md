@@ -53,3 +53,18 @@ I like the layout. Lets add some UX design to this though, give me a color palet
 ### 10.
 
 Give me a new color palette, lets keep a dark theme, but slightly lighter with a warm blue to teal color palette
+
+### 11.
+
+I want to save a habit as something I can reuse. When I review a brief before it goes any further, here's what I actually check for: - It names who owns it - It says how we'll know it worked - The scope at the end matches the scope at the start - It explains the problem before it proposes a fix. Turn that into a skill called review-checklist, so I can point it at any brief and get the same check every time, without me explaining it again.
+
+### 12.
+
+run my review-checklist skill
+
+### 13.
+
+1. Update the owner to "Adam" with Helen confirming
+2. lets set 8 as a baseline and more than 10 as a target
+3. update the scoring change to be part of the story at the top
+4. skip for now
